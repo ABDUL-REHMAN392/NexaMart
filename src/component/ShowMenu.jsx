@@ -3,7 +3,8 @@ import { NavLink } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { hideMenu } from "../redux/conditionSlices";
 import { motion } from "framer-motion";
-import Form from './Form';
+import { useEffect } from "react";
+import Form from "./Form";
 
 const menuVariants = {
   hidden: { y: "100%" },
@@ -17,7 +18,7 @@ const menuVariants = {
     },
   },
   exit: {
-    y: "100%",  // slide down to close
+    y: "100%",
     transition: {
       type: "tween",
       duration: 0.4,
@@ -41,6 +42,14 @@ function ShowMenu() {
     dispatch(hideMenu());
   };
 
+  // Disable scroll when menu is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden"; // prevent background scroll
+    return () => {
+      document.body.style.overflow = ""; // reset on unmount
+    };
+  }, []);
+
   return (
     <motion.div
       className="fixed inset-0 z-50 backdrop-blur-md bg-white/30 p-4 flex flex-col"
@@ -49,22 +58,40 @@ function ShowMenu() {
       exit="exit"
       variants={menuVariants}
     >
-      <motion.div className="flex justify-between items-center mb-6" variants={itemVariants}>
-        <h1 className="text-2xl font-bold">Nexa<span className="pacifico text-indigo-600">Mart</span></h1>
-        <RxCross1 size={30} onClick={handleClose} className="cursor-pointer"/>
+      {/* Top: Brand + Close */}
+      <motion.div
+        className="flex justify-between items-center mb-6"
+        variants={itemVariants}
+      >
+        <h1 className="text-2xl font-bold">
+          Nexa<span className="pacifico text-indigo-600">Mart</span>
+        </h1>
+        <RxCross1
+          size={30}
+          onClick={handleClose}
+          className="cursor-pointer hover:text-red-500 transition"
+        />
       </motion.div>
 
+      {/* Navigation Links */}
       <motion.div className="flex flex-col items-center gap-6 mt-6">
-        {['/', '/about', '/contact'].map((path, idx) => (
+        {["/", "/about", "/contact"].map((path) => (
           <motion.div key={path} variants={itemVariants}>
-            <NavLink to={path} className="text-2xl font-medium" onClick={handleClose}>
-              {path === '/' ? 'Home' : path.slice(1).charAt(0).toUpperCase() + path.slice(2)}
+            <NavLink
+              to={path}
+              onClick={handleClose}
+              className="text-2xl font-medium hover:text-indigo-600 transition"
+            >
+              {path === "/"
+                ? "Home"
+                : path.slice(1).charAt(0).toUpperCase() + path.slice(2)}
             </NavLink>
           </motion.div>
         ))}
       </motion.div>
 
-      <motion.div className="mt-8" variants={itemVariants}>
+      {/* Search Form */}
+      <motion.div className="mt-8 w-full" variants={itemVariants}>
         <Form onSearch={handleClose} />
       </motion.div>
     </motion.div>
