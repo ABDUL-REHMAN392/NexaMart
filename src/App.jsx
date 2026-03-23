@@ -11,6 +11,8 @@ import OAuthSuccess from './pages/auth/OAuthSuccess';
 import OAuthFailure from './pages/auth/OAuthFailure';
 import Profile from './pages/Profile';
 import Checkout from './pages/Checkout';
+import Orders from './pages/Orders';
+import OrderDetail from './pages/OrderDetail';
 const router=createBrowserRouter(createRoutesFromElements(
   <Route path='/' element={<Layout/>}>
     <Route index element={<Home/>}/>
@@ -25,7 +27,9 @@ const router=createBrowserRouter(createRoutesFromElements(
     <Route path="register" element={<Register />}       />
    <Route path="profile"         element={<Profile />}     />
     <Route path="checkout"        element={<Checkout />}    />
-
+<Route path="orders"          element={<Orders />}      />
+        <Route path="orders/:orderId" element={<OrderDetail />} />
+  
     <Route path='product/:id' element={<SingleProduct/>}/>
       <Route path="oauth-success"      element={<OAuthSuccess />}   />
         <Route path="oauth-failure" element={<OAuthFailure />} />
