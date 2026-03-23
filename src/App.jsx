@@ -5,6 +5,8 @@ import Layout from './UI/Layout'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Search from './pages/Search';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
 const router=createBrowserRouter(createRoutesFromElements(
   <Route path='/' element={<Layout/>}>
     <Route index element={<Home/>}/>
@@ -15,6 +17,8 @@ const router=createBrowserRouter(createRoutesFromElements(
     <Route path='category/:category' element={<Category/>}/>
     <Route path='cart' element={<Cart/>}/>
     <Route path='favorite' element={<Favorite/>}/>
+    <Route path="login" element={<Login />}          />
+    <Route path="register" element={<Register />}       />
     <Route path='product/:id' element={<SingleProduct/>}/>
   </Route>
 ))
