@@ -1,91 +1,120 @@
-import React, { useEffect, useRef, useState } from 'react';
-import ShowItem from './ShowItem';
-import 'react-loading-skeleton/dist/skeleton.css';
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { useEffect, useRef, useState } from "react";
+import ShowItem from "./ShowItem";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { motion } from "framer-motion";
+
+function ScrollBtn({ dir, onClick }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button onClick={onClick}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{
+        width: 38, height: 38, borderRadius: '50%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        border: hov ? '1.5px solid #6366f1' : '1.5px solid #e5e7eb',
+        background: hov ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : '#fff',
+        color: hov ? '#fff' : '#9ca3af', cursor: 'pointer',
+        boxShadow: hov ? '0 6px 18px rgba(99,102,241,0.3)' : '0 1px 4px rgba(0,0,0,0.06)',
+        transition: 'all 0.2s ease',
+      }}
+    >
+      {dir === 'left' ? <FaChevronLeft size={12} /> : <FaChevronRight size={12} />}
+    </button>
+  );
+}
 
 function NewArrival() {
-  const [newArrivals, setNewArrivals] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const scrollRef = useRef();
+  const [data, setData]         = useState([]);
+  const [isLoading, setLoading] = useState(true);
+  const scrollRef               = useRef();
 
   useEffect(() => {
-    const fetchNewArrivals = async () => {
+    (async () => {
       setLoading(true);
       try {
-        const res = await fetch('https://dummyjson.com/products?limit=8&skip=90');
-        const data = await res.json();
-
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        const updated = data.products.map(item => {
-          const discount = (item.price * item.discountPercentage) / 100;
-          return {
-            ...item,
-            finalPrice: item.price - discount,
-            image: item.images[0] || item.thumbnail
-          };
-        });
-
-        setNewArrivals(updated);
-      } catch (err) {
-        console.error('Failed to fetch new arrivals:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNewArrivals();
+        const res    = await fetch("https://dummyjson.com/products?limit=8&skip=90");
+        const result = await res.json();
+        await new Promise(r => setTimeout(r, 500));
+        setData(result.products.map(item => ({
+          ...item,
+          finalPrice: parseFloat((item.price - (item.price * item.discountPercentage) / 100).toFixed(2)),
+          image: item.images[0] || item.thumbnail,
+        })));
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    })();
   }, []);
 
-  const scroll = (direction) => {
-    const amount = 300;
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({
-        left: direction === 'left' ? -amount : amount,
-        behavior: 'smooth',
-      });
-    }
-  };
+  const scroll = dir =>
+    scrollRef.current?.scrollBy({ left: dir === 'left' ? -260 : 260, behavior: 'smooth' });
 
   return (
-    <section className="py-12 px-6 md:px-20 relative">
-      <h2 className="text-center text-3xl mb-6">
-        New <span className="pacifico text-indigo-700">Arrivals</span>
-      </h2>
+    <>
+      <style>{`
+        .na-scroll {
+          display: flex;
+          gap: 14px;
+          overflow-x: auto;
+          padding-bottom: 10px;
+          padding-top: 8px;
+          scrollbar-width: none;
+          -webkit-overflow-scrolling: touch;
+        }
+        .na-scroll::-webkit-scrollbar { display: none; }
 
-      {/* Arrows */}
-      <button
-        onClick={() => scroll('left')}
-        className="absolute group left-2 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-white shadow-md rounded-full hover:bg-indigo-100 transition"
-      >
-        <FaChevronLeft className="text-indigo-600 group-hover:cursor-pointer text-lg" />
-      </button>
+        .na-card-wrap {
+          flex-shrink: 0;
+          width: 160px;
+        }
+        @media (min-width: 480px)  { .na-card-wrap { width: 190px; } }
+        @media (min-width: 640px)  { .na-card-wrap { width: 220px; } }
+        @media (min-width: 1024px) { .na-card-wrap { width: 240px; } }
 
-      <button
-        onClick={() => scroll('right')}
-        className="absolute group right-2 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-white shadow-md rounded-full hover:bg-indigo-100 transition"
-      >
-        <FaChevronRight className="text-indigo-600 group-hover:cursor-pointer text-lg" />
-      </button>
+        @media (max-width: 640px)  { .na-section { padding: 32px 0 !important; } .na-wrap { padding: 0 12px !important; } .na-h2 { font-size: 18px !important; } }
+        @media (min-width: 641px) and (max-width: 900px) { .na-wrap { padding: 0 24px !important; } }
+      `}</style>
 
-      {/* Product List */}
-      <div
-        ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar pb-4"
-      >
-        {loading
-          ? Array(8).fill(0).map((_, idx) => (
-              <div key={idx} className="min-w-[240px]">
-                <ShowItem isLoading={true} />
-              </div>
-            ))
-          : newArrivals.map(product => (
-              <div key={product.id} className="min-w-[240px]">
-                <ShowItem {...product} />
-              </div>
-            ))}
-      </div>
-    </section>
+      <section className="na-section" style={{ background: '#fff', padding: '52px 0' }}>
+        <div className="na-wrap" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px' }}>
+
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }} whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }} transition={{ duration: 0.4 }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <h2 className="na-h2" style={{ fontSize: 24, fontWeight: 900, color: '#1e1b4b', margin: 0, letterSpacing: '-0.02em' }}>
+                New <span style={{ color: '#6366f1', fontFamily: "'Pacifico',cursive" }}>Arrivals</span>
+              </h2>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {['left', 'right'].map(d => <ScrollBtn key={d} dir={d} onClick={() => scroll(d)} />)}
+            </div>
+          </motion.div>
+
+          {/* Scroll */}
+          <div ref={scrollRef} className="na-scroll">
+            {isLoading
+              ? Array(8).fill(0).map((_, i) => (
+                  <div key={i} className="na-card-wrap">
+                    <ShowItem isLoading />
+                  </div>
+                ))
+              : data.map((p, i) => (
+                  <motion.div key={p.id} className="na-card-wrap"
+                    initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }} transition={{ delay: i * 0.04, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <ShowItem {...p} />
+                  </motion.div>
+                ))
+            }
+          </div>
+
+        </div>
+      </section>
+    </>
   );
 }
 
