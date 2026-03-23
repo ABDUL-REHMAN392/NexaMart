@@ -7,6 +7,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import Search from './pages/Search';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import OAuthSuccess from './pages/auth/OAuthSuccess';
+import OAuthFailure from './pages/auth/OAuthFailure';
 const router=createBrowserRouter(createRoutesFromElements(
   <Route path='/' element={<Layout/>}>
     <Route index element={<Home/>}/>
@@ -20,6 +22,8 @@ const router=createBrowserRouter(createRoutesFromElements(
     <Route path="login" element={<Login />}          />
     <Route path="register" element={<Register />}       />
     <Route path='product/:id' element={<SingleProduct/>}/>
+      <Route path="oauth-success"      element={<OAuthSuccess />}   />
+        <Route path="oauth-failure" element={<OAuthFailure />} />
   </Route>
 ))
 function App() {
