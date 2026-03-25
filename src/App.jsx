@@ -11,8 +11,7 @@ import {
   Contact,
   Favorite,
   Home,
-  SingleProduct,
-  UserInformation,
+  SingleProduct
 } from "./pages";
 import Layout from "./UI/Layout";
 import { ToastContainer } from "react-toastify";
@@ -30,6 +29,8 @@ import NotFound from "./pages/NotFound";
 import AdminLayout from "./component/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrders from "./pages/admin/AdminOrders";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminReviews from "./pages/admin/AdminReviews";
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
@@ -37,7 +38,6 @@ const router = createBrowserRouter(
         <Route index element={<Home />} />
         <Route path="about" element={<About />} />
         <Route path="search" element={<Search />} />
-        <Route path="user_details" element={<UserInformation />} />
         <Route path="contact" element={<Contact />} />
         <Route path="category/:category" element={<Category />} />
         <Route path="cart" element={<Cart />} />
@@ -57,7 +57,8 @@ const router = createBrowserRouter(
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
          <Route path="orders"    element={<AdminOrders />}    />
-
+        <Route path="users"     element={<AdminUsers />}     />
+        <Route path="reviews"   element={<AdminReviews />}   />
       </Route>
     </>,
   ),
