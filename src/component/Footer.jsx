@@ -13,7 +13,7 @@ const links = {
   Support: [
     { label: "Help Center",       path: "#"        },
     { label: "Terms of Service",  path: "#"        },
-    { label: "Privacy Policy",    path: "#"        },
+    { label: "Privacy Policy",    path: "/privacy-policy"        },
     { label: "Contact",           path: "/contact" },
   ],
 };
@@ -140,7 +140,7 @@ export default function Footer() {
             gridTemplateColumns:'1.6fr 1fr 1fr 1.4fr',
             gap:48,
             paddingBottom:48,
-            alignItems: 'start', /* ✅ FIX: columns apni actual height tak rahenge */
+            alignItems: 'start', 
             borderBottom:'1px solid rgba(255,255,255,0.07)',
           }}>
 
