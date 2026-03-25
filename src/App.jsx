@@ -10,6 +10,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import Layout from "./UI/Layout";
+import ProtectedRoute from "./component/ProtectedRoute";
 import AdminLayout from "./component/admin/AdminLayout";
 import Home from "./pages/Home";
 import About from "./pages/About";
@@ -119,10 +120,38 @@ const router = createBrowserRouter(
         <Route path="oauth-success" element={<OAuthSuccess />} />
         <Route path="oauth-failure" element={<OAuthFailure />} />
 
-        <Route path="checkout" element={<Checkout />} />
-        <Route path="orders" element={<Orders />} />
-        <Route path="orders/:orderId" element={<OrderDetail />} />
-        <Route path="profile" element={<Profile />} />
+        <Route
+          path="checkout"
+          element={
+            <ProtectedRoute>
+              <Checkout />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="orders"
+          element={
+            <ProtectedRoute>
+              <Orders />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="orders/:orderId"
+          element={
+            <ProtectedRoute>
+              <OrderDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       <Route path="/admin" element={<AdminLayout />}>
