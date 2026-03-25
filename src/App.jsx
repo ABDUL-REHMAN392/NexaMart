@@ -29,6 +29,7 @@ import OrderDetail from "./pages/OrderDetail";
 import NotFound from "./pages/NotFound";
 import AdminLayout from "./component/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminOrders from "./pages/admin/AdminOrders";
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
@@ -55,6 +56,8 @@ const router = createBrowserRouter(
       </Route>
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
+         <Route path="orders"    element={<AdminOrders />}    />
+
       </Route>
     </>,
   ),
