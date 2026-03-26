@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import { api } from '../api/api';
-import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiPackage, FiChevronRight, FiShoppingBag } from 'react-icons/fi';
 
@@ -49,7 +48,7 @@ function Orders() {
         const res = await api.get(`/orders?page=${page}&limit=10`);
         setOrders(res.data.orders);
         setTotal(res.data.pagination.pages);
-      } catch (err) { toast.error(err.message || 'Failed to load orders'); }
+      } catch (err) { throw new Error(err.message || 'Failed to load orders'); }
       finally { setLoading(false); }
     })();
   }, [page]);

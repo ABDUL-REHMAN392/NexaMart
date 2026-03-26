@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/api';
-import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiArrowLeft, FiMapPin, FiPackage, FiCreditCard, FiX } from 'react-icons/fi';
 import { useSocketStore } from '../store/useSocketStore';
@@ -33,12 +32,10 @@ function OrderDetail() {
     const onUpdate = d => {
       if (d.orderId !== orderId) return;
       setOrder(p => p ? { ...p, orderStatus: d.orderStatus, paymentStatus: d.paymentStatus } : p);
-      toast.info(`Status: ${d.orderStatus}`, { autoClose: 3000 });
     };
     const onCancel = d => {
       if (d.orderId !== orderId) return;
       setOrder(p => p ? { ...p, orderStatus: 'cancelled', paymentStatus: d.paymentStatus } : p);
-      toast.warn(d.refund?.message || 'Order cancelled by store.', { autoClose: 7000 });
     };
     socket.on('order_status_update', onUpdate);
     socket.on('order_cancelled_by_admin', onCancel);
@@ -51,7 +48,6 @@ function OrderDetail() {
         const res = await api.get(`/orders/${orderId}`);
         setOrder(res.data.order);
       } catch (err) {
-        toast.error(err.message || 'Order not found');
         navigate('/orders');
       } finally { setLoading(false); }
     })();
@@ -61,13 +57,9 @@ function OrderDetail() {
     if (!window.confirm('Cancel this order?')) return;
     setCancelling(true);
     try {
-      const res    = await api.put(`/orders/${orderId}/cancel`, { reason: 'Cancelled by customer' });
+      const res = await api.put(`/orders/${orderId}/cancel`, { reason: 'Cancelled by customer' });
       setOrder(res.data.order);
-      const refund = res.data.refund;
-      if (refund?.initiated) toast.success(`Cancelled. ${refund.message}`, { autoClose: 6000 });
-      else if (refund)       toast.warn(`Cancelled. ${refund.message}`, { autoClose: 8000 });
-      else                   toast.success('Order cancelled successfully');
-    } catch (err) { toast.error(err.message || 'Cannot cancel'); }
+    } catch (err) {}
     finally { setCancelling(false); }
   };
 

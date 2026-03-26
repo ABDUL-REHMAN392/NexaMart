@@ -16,7 +16,6 @@ import "react-phone-number-input/style.css";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useCartStore } from "../../store/useCartStore";
 import { useFavoriteStore } from "../../store/useFavoriteStore";
-import { toast } from "react-toastify";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -112,7 +111,7 @@ function Register() {
   const [errors, setErrors] = useState({});
   const [focused, setFocused] = useState("");
   const [serverError, setServerError] = useState("");
-
+const [successMessage, setSuccessMessage] = useState("");
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -157,13 +156,15 @@ function Register() {
 
     const result = await register(form);
 
-    if (result.success) {
-      await logout();
-      resetCart();
-      resetFavorites();
-      toast.success("Account created! Please sign in 🎉");
-      navigate("/login");
-    } else {
+   if (result.success) {
+  await logout();
+  resetCart();
+  resetFavorites();
+  setSuccessMessage("Account created! Please sign in 🎉");
+  setTimeout(() => {
+    navigate("/login");
+  }, 1500);
+}else {
       setServerError(
         result.message || "Something went wrong. Please try again."
       );
@@ -340,6 +341,27 @@ function Register() {
                 </motion.div>
               )}
             </AnimatePresence>
+            {/* Success Message */}
+<AnimatePresence>
+  {successMessage && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      style={{
+        marginBottom: 16,
+        color: "#22c55e",
+        fontSize: 13,
+        display: "flex",
+        justifyContent:"center",
+        alignItems: "center",
+        gap: 6,
+      }}
+    >
+      {successMessage}
+    </motion.div>
+  )}
+</AnimatePresence>
 
             <form
               onSubmit={handleSubmit}

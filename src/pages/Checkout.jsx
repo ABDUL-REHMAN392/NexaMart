@@ -4,7 +4,6 @@ import { useCartStore } from "../store/useCartStore";
 import { api } from "../api/api";
 import { CiDeliveryTruck } from "react-icons/ci";
 import { FaMoneyBillAlt } from "react-icons/fa";
-import { toast } from 'react-toastify';
 import { FiMapPin, FiAlertCircle, FiPackage } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -446,10 +445,9 @@ function Checkout() {
       await api.put("/users/address", address);
       const res = await api.post("/orders");
       resetCart();
-      toast.success("Order placed successfully! 🎉");
       navigate(`/orders/${res.data.order._id}`);
     } catch (err) {
-      toast.error(err.message || "Failed to place order");
+      throw new Error(err.message || "Failed to place order");
     } finally {
       setIsPlacing(false);
     }

@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../api/api';
-import { toast } from 'react-toastify';
 import { FiSearch } from 'react-icons/fi';
 import { MdBlock, MdCheckCircle } from 'react-icons/md';
 import { motion } from 'framer-motion';
 
-/* ── Mobile User Card ── */
 function UserCard({ user, onToggle, togglingId }) {
   return (
     <div style={{ background: '#fff', borderRadius: 16, border: '1.5px solid #ebebf5', padding: '14px 16px', boxShadow: '0 2px 10px rgba(99,102,241,0.06)' }}>
@@ -64,7 +62,7 @@ function AdminUsers() {
       const res = await api.get(`/admin/users?${params}`);
       setUsers(res.data.users);
       setTotalPages(res.data.pagination.pages);
-    } catch (err) { toast.error(err.message || 'Failed'); }
+    } catch (err) {}
     finally { setLoading(false); }
   }, [page, search]);
 
@@ -76,8 +74,7 @@ function AdminUsers() {
     try {
       const res = await api.put(`/admin/users/${userId}/toggle-active`);
       setUsers(prev => prev.map(u => u._id === userId ? { ...u, isActive: res.data.isActive } : u));
-      toast.success(res.data.isActive ? 'User activated' : 'User deactivated');
-    } catch (err) { toast.error(err.message || 'Failed'); }
+    } catch (err) {}
     finally { setToggling(null); }
   };
 
@@ -120,7 +117,6 @@ function AdminUsers() {
           <div style={{ background: '#fff', borderRadius: 18, border: '1.5px solid #ebebf5', padding: '52px 0', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>No users found</div>
         ) : (
           <>
-            {/* Desktop Table */}
             <div className="adm-users-table" style={{ background: '#fff', borderRadius: 18, border: '1.5px solid #ebebf5', boxShadow: '0 2px 14px rgba(99,102,241,0.06)', overflow: 'hidden' }}>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -174,7 +170,6 @@ function AdminUsers() {
               </div>
             </div>
 
-            {/* Mobile Cards */}
             <div className="adm-users-cards">
               {users.map(user => <UserCard key={user._id} user={user} onToggle={handleToggle} togglingId={togglingId} />)}
             </div>

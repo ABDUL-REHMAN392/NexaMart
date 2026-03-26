@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { api } from "../../api/api";
-import { toast } from "react-toastify";
 import {
   AreaChart,
   Area,
@@ -243,7 +242,7 @@ function AdminDashboard() {
         const res = await api.get("/admin/dashboard");
         setData(res.data);
       } catch (err) {
-        toast.error(err.message || "Failed to load dashboard");
+        // handle silently
       } finally {
         setLoading(false);
       }
@@ -390,7 +389,6 @@ function AdminDashboard() {
       `}</style>
 
       <div>
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -412,7 +410,6 @@ function AdminDashboard() {
           </p>
         </motion.div>
 
-        {/* Stat cards — responsive auto-fill */}
         <div
           style={{
             display: "grid",
@@ -426,7 +423,6 @@ function AdminDashboard() {
           ))}
         </div>
 
-        {/* This month strip */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -481,7 +477,6 @@ function AdminDashboard() {
           ))}
         </motion.div>
 
-        {/* Charts */}
         <div className="dash-charts">
           <SectionCard title="Revenue — Last 6 Months" delay={0.35}>
             <div style={{ padding: "14px 16px 18px" }}>
@@ -625,9 +620,7 @@ function AdminDashboard() {
           </SectionCard>
         </div>
 
-        {/* Bottom */}
         <div className="dash-bottom">
-          {/* Recent Orders */}
           <SectionCard
             title="Recent Orders"
             action="View all"
@@ -744,7 +737,6 @@ function AdminDashboard() {
             )}
           </SectionCard>
 
-          {/* Top Products */}
           <SectionCard title="Top Products" delay={0.5}>
             {topProducts.length === 0 ? (
               <p

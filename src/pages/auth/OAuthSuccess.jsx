@@ -1,40 +1,35 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useCartStore } from '../../store/useCartStore';
 import { useFavoriteStore } from '../../store/useFavoriteStore';
 import { FiShoppingBag } from 'react-icons/fi';
-import { toast } from 'react-toastify';
 
 function OAuthSuccess() {
-  const navigate              = useNavigate();
-  const { getMe }             = useAuthStore();
-  const { mergeGuestCart }    = useCartStore();
-  const { fetchFavorites }    = useFavoriteStore();
-  const ran                   = useRef(false); // React strict mode double-run guard
-  const [status, setStatus]   = useState('Verifying your account...');
+  const navigate           = useNavigate();
+  const { getMe }          = useAuthStore();
+  const { mergeGuestCart } = useCartStore();
+  const { fetchFavorites } = useFavoriteStore();
+  const [status, setStatus] = useState('Verifying your account...');
 
   useEffect(() => {
-    if (ran.current) return;
-    ran.current = true;
-
     (async () => {
       try {
-        // 1. Cookie already set hai — user fetch karo
-        await getMe();
-
+        // Cookie already set honi chahiye OAuth callback ke baad
+        // Agar cookie nahi hai (direct URL visit) getMe() throw karega — catch mein redirect
+        const user = await getMe();        
+        // Extra guard — agar user nahi mila (null/undefined return hua)
+        if (!user) throw new Error('No user');
+        
         setStatus('Loading your data...');
-
-        // 2. Guest cart merge (localStorage → backend) + favorites parallel
         await Promise.all([mergeGuestCart(), fetchFavorites()]);
 
         setStatus('All set! Redirecting...');
-        toast.success('Logged in successfully!');
+        setTimeout(() => navigate('/', { replace: true }), 800);
 
-        setTimeout(() => navigate('/', { replace: true }), 600);
       } catch {
-        toast.error('Authentication failed');
+        // Direct URL visit ya failed OAuth — login pe bhejo
         navigate('/login', { replace: true });
       }
     })();

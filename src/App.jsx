@@ -6,9 +6,6 @@ import {
   Outlet,
 } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
 import Layout from "./UI/Layout";
 import ProtectedRoute from "./component/ProtectedRoute";
 import AdminLayout from "./component/admin/AdminLayout";
@@ -172,17 +169,7 @@ function App() {
   return (
     <>
       <RouterProvider router={router} />
-      <ToastContainer
-        position="top-right"
-        autoClose={2000}
-        hideProgressBar={true}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
+      
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -396,15 +396,30 @@ function NotificationBell() {
   }, [socket]);
 
   // Desktop: dropdown position calculate karo bell button ke relative
-  useEffect(() => {
+  const updateDropPos = useCallback(() => {
     if (!isMobile && open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
       setDropPos({
-        top: rect.bottom + window.scrollY + 10,
+        top: rect.bottom + 10,           // fixed = viewport — scrollY nahi chahiye
         right: window.innerWidth - rect.right,
       });
     }
   }, [open, isMobile]);
+
+  useEffect(() => {
+    updateDropPos();
+  }, [updateDropPos]);
+
+  // Scroll pe bhi recalculate — sticky header ke saath bell move karti hai
+  useEffect(() => {
+    if (!open || isMobile) return;
+    window.addEventListener('scroll', updateDropPos, { passive: true });
+    window.addEventListener('resize', updateDropPos, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', updateDropPos);
+      window.removeEventListener('resize', updateDropPos);
+    };
+  }, [open, isMobile, updateDropPos]);
 
   // Desktop: click outside close
   useEffect(() => {

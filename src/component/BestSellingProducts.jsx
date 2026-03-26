@@ -55,6 +55,7 @@ function BestSellingProducts() {
           display: flex;
           gap: 14px;
           overflow-x: auto;
+          overflow-y:hidden
           padding-bottom: 10px;
           padding-top: 8px;
           scrollbar-width: none;

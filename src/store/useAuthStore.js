@@ -12,8 +12,10 @@ export const useAuthStore = create((set, get) => ({
       set({ isLoading: true, error: null });
       const res = await api.get('/auth/me');
       set({ user: res.data.user, isAuthenticated: true });
+      return res.data.user; // ← OAuthSuccess guard ke liye zaroori
     } catch {
       set({ user: null, isAuthenticated: false });
+      throw new Error('Not authenticated'); // ← catch propagate ho
     } finally {
       set({ isLoading: false });
     }

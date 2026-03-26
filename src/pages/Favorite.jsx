@@ -3,10 +3,9 @@ import { useFavoriteStore } from '../store/useFavoriteStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useCartStore } from '../store/useCartStore';
 import { FaTrash } from 'react-icons/fa';
-import { FiShoppingCart, FiHeart, FiTrash2 } from 'react-icons/fi';
+import { FiShoppingCart, FiHeart, FiTrash2, FiCheck, FiAlertCircle,FiX } from 'react-icons/fi';
 import { NavLink } from 'react-router-dom';
 import { FaRegHeart } from "react-icons/fa";
-import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ── Skeleton Card ──────────────────────────────────────────────────────────────
@@ -68,7 +67,6 @@ function ClearConfirmModal({ onConfirm, onCancel, isClearing, itemCount }) {
           border: '1.5px solid #ebebf5',
         }}
       >
-        {/* Icon */}
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -84,7 +82,6 @@ function ClearConfirmModal({ onConfirm, onCancel, isClearing, itemCount }) {
           <FiTrash2 size={26} color="#ef4444" />
         </motion.div>
 
-        {/* Title */}
         <motion.h3
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -98,7 +95,6 @@ function ClearConfirmModal({ onConfirm, onCancel, isClearing, itemCount }) {
           Clear All Favorites?
         </motion.h3>
 
-        {/* Message */}
         <motion.p
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -116,7 +112,6 @@ function ClearConfirmModal({ onConfirm, onCancel, isClearing, itemCount }) {
           . This action cannot be undone.
         </motion.p>
 
-        {/* Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -181,8 +176,118 @@ function ClearConfirmModal({ onConfirm, onCancel, isClearing, itemCount }) {
   );
 }
 
+// ── Inline Feedback Banner ─────────────────────────────────────────────────────
+function InlineFeedback({ type, message }) {
+  const isSuccess = type === 'success';
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -6, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -4, scale: 0.97 }}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        padding: '7px 10px', borderRadius: 9, marginBottom: 8,
+        background: isSuccess ? '#f0fdf4' : '#fff1f2',
+        border: `1.5px solid ${isSuccess ? '#bbf7d0' : '#fecaca'}`,
+      }}
+    >
+      {isSuccess
+        ? <FiCheck size={13} color="#22c55e" strokeWidth={2.5} />
+        : <FiAlertCircle size={13} color="#ef4444" />
+      }
+      <span style={{
+        fontSize: 11.5, fontWeight: 600,
+        color: isSuccess ? '#15803d' : '#dc2626',
+        fontFamily: "'DM Sans', sans-serif",
+      }}>
+        {message}
+      </span>
+    </motion.div>
+  );
+}
+
 // ── Product Card ───────────────────────────────────────────────────────────────
 function FavCard({ item, onAddToCart, onRemove, index }) {
+
+  // feedback: null | { type: 'success'|'error', message: string, action: 'cart'|'remove' }
+  const [cartState, setCartState] = useState("idle");
+const [cartError, setCartError] = useState("");
+  const [feedback, setFeedback] = useState(null);
+  const [removeLoading, setRemoveLoading] = useState(false);
+
+const Spinner = (
+  <motion.div
+    animate={{ rotate: 360 }}
+    transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+    style={{
+      width: 14,
+      height: 14,
+      border: "2px solid rgba(255,255,255,0.5)",
+      borderTop: "2px solid white",
+      borderRadius: "50%",
+    }}
+  />
+);
+  const BTNS = {
+  idle: {
+    label: "Add to Cart",
+    Icon: <FiShoppingCart size={13} />,
+    bg: "#6366f1",
+  },
+  loading: {
+  label: "Adding...",
+  Icon: Spinner,
+  bg: "#818cf8",
+},
+  success: {
+    label: "Added!",
+    Icon: <FiCheck size={13} strokeWidth={2.5} />,
+    bg: "#22c55e",
+  },
+  error: {
+    label: cartError || "Maximum quantity reached",
+    Icon: <FiX size={13} />,
+    bg: "#ef4444",
+  },
+};
+
+const B = BTNS[cartState];
+  const showFeedback = (type, message, action) => {
+    setFeedback({ type, message, action });
+    // Auto-clear after 2.2s (for non-remove actions)
+    if (action !== 'remove') {
+      setTimeout(() => setFeedback(null), 2200);
+    }
+  };
+
+const handleCart = async () => {
+  if (cartState !== "idle") return;
+
+  setCartState("loading");
+
+  try {
+    await onAddToCart(item);
+    setCartState("success");
+    setTimeout(() => setCartState("idle"), 2200);
+  } catch (err) {
+    setCartError(err?.message || "Failed");
+    setCartState("error");
+    setTimeout(() => setCartState("idle"), 2800);
+  }
+};
+  const handleRemove = async () => {
+    setRemoveLoading(true);
+    setFeedback(null);
+    try {
+      await onRemove(item);
+      // No feedback needed — card animates out
+    } catch (err) {
+      showFeedback('error', err?.message || 'Failed to remove', 'remove');
+      setRemoveLoading(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -215,7 +320,6 @@ function FavCard({ item, onAddToCart, onRemove, index }) {
           className="card-img"
           onError={e => { e.target.src = 'https://placehold.co/300x220?text=?'; }}
         />
-        {/* Heart badge */}
         <div style={{
           position: 'absolute', top: 10, right: 10,
           width: 30, height: 30, borderRadius: '50%',
@@ -254,36 +358,78 @@ function FavCard({ item, onAddToCart, onRemove, index }) {
         }}>${item.price?.toFixed(2)}</span>
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6, marginTop: 'auto' }}>
+       <motion.button
+  onClick={handleCart}
+  disabled={cartState === "loading" || removeLoading}
+  whileTap={cartState === "idle" ? { scale: 0.96 } : {}}
+  style={{
+    flex: 1,
+    height: 34,
+    borderRadius: 10,
+    border: "none",
+    background: B.bg,
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: 700,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    cursor: cartState === "loading" ? "not-allowed" : "pointer",
+    fontFamily: "'DM Sans', sans-serif",
+    transition: "all 0.2s ease",
+    boxShadow: `0 4px 14px ${B.bg}55`,
+    overflow: "hidden",
+    minWidth: 0,
+  }}
+>
+  <AnimatePresence mode="wait">
+    <motion.span
+      key={cartState}
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
+      transition={{ duration: 0.15 }}
+      style={{ display: "flex", alignItems: "center", gap: 5 }}
+    >
+      {B.Icon}
+      <span
+        style={{
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          maxWidth: 120,
+        }}
+      >
+        {B.label}
+      </span>
+    </motion.span>
+  </AnimatePresence>
+</motion.button>
+
           <button
-            onClick={() => onAddToCart(item)}
-            className="cart-btn"
-            style={{
-              flex: 1, height: 34, borderRadius: 10,
-              border: '1.5px solid #ebebf5', background: '#f8f8fc',
-              color: '#6b7280', fontSize: 11, fontWeight: 600,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-              cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
-              transition: 'all 0.18s ease', minWidth: 0,
-            }}
-          >
-            <FiShoppingCart size={13} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              Add to Cart
-            </span>
-          </button>
-          <button
-            onClick={() => onRemove(item)}
+            onClick={handleRemove}
+            disabled={removeLoading}
             className="remove-btn"
             style={{
               width: 34, height: 34, flexShrink: 0, borderRadius: 10,
               border: '1.5px solid #ebebf5', background: '#f8f8fc',
-              color: '#6b7280', cursor: 'pointer',
+              color: removeLoading ? '#fca5a5' : '#6b7280',
+              cursor: removeLoading ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 0.18s ease',
             }}
           >
-            <FaTrash size={12} />
+            {removeLoading ? (
+              <motion.span
+                animate={{ rotate: 360 }}
+                transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
+                style={{ display: 'inline-block', fontSize: 13 }}
+              >⟳</motion.span>
+            ) : (
+              <FaTrash size={12} />
+            )}
           </button>
         </div>
       </div>
@@ -299,33 +445,24 @@ function Favorite() {
   const [showClearModal, setShowClearModal] = useState(false);
 
   const handleRemove = async (item) => {
-    try {
-      await toggleFavorite({ productId: item.productId });
-      toast.success('Removed from favorites');
-    } catch { toast.error('Failed to remove'); }
+    await toggleFavorite({ productId: item.productId });
   };
 
   const handleClearAll = async () => {
     try {
       await clearFavorites();
-      toast.success('All favorites cleared');
-    } catch {
-      toast.error('Failed to clear');
     } finally {
       setShowClearModal(false);
     }
   };
 
   const handleAddToCart = async (item) => {
-    try {
-      await addToCart({
-        productId: item.productId, title: item.title,
-        price: item.price, image: item.image,
-        brand: item.brand || '', category: item.category || '',
-        rating: item.rating || 0,
-      });
-      toast.success('Added to cart! 🛒');
-    } catch (err) { toast.error(err.message || 'Failed to add'); }
+    await addToCart({
+      productId: item.productId, title: item.title,
+      price: item.price, image: item.image,
+      brand: item.brand || '', category: item.category || '',
+      rating: item.rating || 0,
+    });
   };
 
   /* ── Not Authenticated ── */
@@ -384,12 +521,12 @@ function Favorite() {
           transform: translateY(-3px);
         }
         .fav-card:hover .card-img { transform: scale(1.05); }
-        .cart-btn:hover {
+        .cart-btn:hover:not(:disabled) {
           background: linear-gradient(135deg,#6366f1,#8b5cf6) !important;
           color: #fff !important;
           border-color: transparent !important;
         }
-        .remove-btn:hover {
+        .remove-btn:hover:not(:disabled) {
           background: #fff0f0 !important;
           color: #f87171 !important;
           border-color: #fca5a5 !important;
@@ -410,7 +547,6 @@ function Favorite() {
           box-shadow: 0 8px 24px rgba(239,68,68,0.4) !important;
         }
 
-        /* Responsive grid */
         .fav-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
@@ -490,7 +626,7 @@ function Favorite() {
             )}
           </motion.div>
 
-          {/* Skeleton Grid */}
+          {/* Skeleton */}
           {isLoading && (
             <div className="fav-grid">
               {[1, 2, 3, 4].map(i => <SkeletonCard key={i} />)}
@@ -540,7 +676,6 @@ function Favorite() {
               </div>
             )}
           </AnimatePresence>
-
         </div>
       </div>
 

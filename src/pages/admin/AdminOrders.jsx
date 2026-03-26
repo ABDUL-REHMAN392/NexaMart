@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../api/api';
-import { toast } from 'react-toastify';
 import { FiSearch, FiChevronDown, FiX, FiFilter } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSocketStore } from '../../store/useSocketStore';
@@ -128,11 +127,7 @@ function AdminOrders() {
 
   useEffect(() => {
     if (!socket) return;
-
-    // Naya order — list refresh karo (notification bell se toast aayega)
     const onNew = () => fetchOrders(true);
-
-    // Customer cancel ya admin status update — UI silently update karo
     const onStatusUpdate = d => {
       setOrders(prev => prev.map(o =>
         o._id === d.orderId
@@ -140,7 +135,6 @@ function AdminOrders() {
           : o
       ));
     };
-
     socket.on('new_order', onNew);
     socket.on('order_status_update', onStatusUpdate);
     return () => {
@@ -158,7 +152,7 @@ function AdminOrders() {
       const res = await api.get(`/orders/admin/all?${params}`);
       setOrders(res.data.orders);
       setTotalPages(res.data.pagination.pages);
-    } catch (err) { toast.error(err.message || 'Failed'); }
+    } catch (err) {}
     finally { if (!silent) setLoading(false); }
   }, [page, search, statusFilter]);
 
@@ -176,11 +170,7 @@ function AdminOrders() {
       const res = await api.put(`/orders/admin/${orderId}/status`, { status, reason });
       const updated = res.data.order;
       setOrders(prev => prev.map(o => o._id === orderId ? { ...o, orderStatus: updated.orderStatus, paymentStatus: updated.paymentStatus } : o));
-      const refund = res.data.refund;
-      if (refund?.initiated) toast.success(`Cancelled. ${refund.message}`, { autoClose: 6000 });
-      else if (refund)       toast.warn(`Cancelled. ${refund.message}`, { autoClose: 8000 });
-      else                   toast.success('Status updated');
-    } catch (err) { toast.error(err.message || 'Failed'); }
+    } catch (err) {}
     finally { setUpdatingId(null); }
   };
 

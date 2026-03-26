@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../api/api';
-import { toast } from 'react-toastify';
 import { FiSearch, FiTrash2, FiEye, FiEyeOff } from 'react-icons/fi';
 import { FaStar } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,7 +28,7 @@ function AdminReviews() {
       const res = await api.get(`/reviews/admin/all?${params}`);
       setReviews(res.data.reviews);
       setTotalPages(res.data.pagination?.pages || 1);
-    } catch (err) { toast.error(err.message || 'Failed'); }
+    } catch (err) {}
     finally { setLoading(false); }
   }, [page, search]);
 
@@ -41,8 +40,7 @@ function AdminReviews() {
     try {
       const res = await api.put(`/reviews/admin/${reviewId}/hide`);
       setReviews(prev => prev.map(r => r._id === reviewId ? { ...r, isHidden: res.data.isHidden } : r));
-      toast.success(res.data.isHidden ? 'Review hidden' : 'Review visible');
-    } catch (err) { toast.error(err.message || 'Failed'); }
+    } catch (err) {}
     finally { setActionId(null); }
   };
 
@@ -52,8 +50,7 @@ function AdminReviews() {
     try {
       await api.delete(`/reviews/admin/${reviewId}`);
       setReviews(prev => prev.filter(r => r._id !== reviewId));
-      toast.success('Review deleted');
-    } catch (err) { toast.error(err.message || 'Failed'); }
+    } catch (err) {}
     finally { setActionId(null); }
   };
 
@@ -97,15 +94,11 @@ function AdminReviews() {
                   transition={{ delay: i * 0.04, duration: 0.3 }}
                   style={{ background: '#fff', borderRadius: 18, border: `1.5px solid ${review.isHidden ? '#f0f0f8' : '#ebebf5'}`, boxShadow: '0 2px 12px rgba(99,102,241,0.06)', padding: '16px 18px' }}
                 >
-                  {/* Top row — responsive */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap' }}>
-
-                    {/* Product image */}
                     <div style={{ width: 48, height: 48, borderRadius: 11, overflow: 'hidden', border: '1.5px solid #ebebf5', background: '#f8f8fc', flexShrink: 0 }}>
                       <img src={review.productImage} alt={review.productTitle} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
 
-                    {/* Review content */}
                     <div style={{ flex: 1, minWidth: 180 }}>
                       <p style={{ fontSize: 11, color: '#9ca3af', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 300 }}>{review.productTitle}</p>
                       <div style={{ marginBottom: 5 }}><StarRow rating={review.rating} /></div>
@@ -113,7 +106,6 @@ function AdminReviews() {
                       <p style={{ fontSize: 12, color: '#6b7280', margin: 0, lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{review.body}</p>
                     </div>
 
-                    {/* Meta + actions — wraps on small screens */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0, marginLeft: 'auto' }}>
                       <div style={{ textAlign: 'right' }}>
                         <p style={{ fontSize: 12, fontWeight: 700, color: '#1e1b4b', margin: '0 0 1px' }}>{review.user?.name}</p>
@@ -128,7 +120,6 @@ function AdminReviews() {
                         </div>
                       </div>
 
-                      {/* Action buttons */}
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button onClick={() => handleToggleHide(review._id)} disabled={actionId === review._id} title={review.isHidden ? 'Show' : 'Hide'}
                           style={{ width: 34, height: 34, borderRadius: 9, border: `1.5px solid ${review.isHidden ? '#bbf7d0' : '#ebebf5'}`, background: review.isHidden ? '#f0fdf4' : '#f8f8fc', color: review.isHidden ? '#16a34a' : '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', opacity: actionId === review._id ? 0.5 : 1 }}

@@ -63,10 +63,9 @@ function SingleProduct() {
   const [reviewForm, setReviewForm]   = useState({ rating:5, title:'', body:'' });
   const [submitting, setSubmitting]   = useState(false);
   const [hoverStar, setHoverStar]     = useState(0);
-  const [_notif, _setNotif] = useState(null);
-  const notify = (text, type = 'success') => { _setNotif({ text, type }); setTimeout(() => _setNotif(null), 2400); };
 
   const favorited = isFavorited(productId);
+
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -75,7 +74,7 @@ function SingleProduct() {
         if (!res.ok) throw new Error();
         const p = await res.json();
         setProduct({ ...p, finalPrice:parseFloat((p.price-(p.price*p.discountPercentage)/100).toFixed(2)), image:p.images?.[0]||p.thumbnail });
-      } catch { notify('Product not found', 'error'); }
+      } catch {}
       finally { setLoading(false); }
     })();
   }, [id]);
@@ -119,31 +118,29 @@ function SingleProduct() {
     try {
       await addToCart({ productId, title:product.title, price:product.finalPrice, image:product.image, brand:product.brand||'', category:product.category||'', rating:product.rating||0 });
       setCartState('success'); setTimeout(()=>setCartState('idle'),2200);
-    } catch (err) { setCartState('error'); setTimeout(()=>setCartState('idle'),2500); notify(err.message||'Failed', 'error'); }
+    } catch (err) { setCartState('error'); setTimeout(()=>setCartState('idle'),2500); }
   };
 
   const handleBuyNow  = async () => { await handleCart(); navigate('/checkout'); };
   const handleFavorite = async () => {
-    if (!isAuthenticated) { notify('Sign in to continue', 'info'); return; }
+    if (!isAuthenticated) { navigate('/login'); return; }
     if (favLoading) return;
     setFavLoading(true);
     try {
       await toggleFavorite({ productId, title:product.title, price:product.finalPrice, image:product.image, brand:product.brand||'', category:product.category||'', rating:product.rating||0 });
-      notify(favorited?'Removed from favorites':'Added to favorites ❤️', favorited?'info':'success');
-    } catch { notify('Something went wrong', 'error'); }
+    } catch {}
     finally { setFavLoading(false); }
   };
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
-    if (!reviewForm.title.trim()) { notify('Title required', 'error'); return; }
-    if (reviewForm.body.trim().length<10) { notify('Min 10 characters', 'warn'); return; }
+    if (!reviewForm.title.trim()) return;
+    if (reviewForm.body.trim().length<10) return;
     setSubmitting(true);
     try {
       const res = await api.post('/reviews', { productId, productTitle:product.title, productImage:product.image, ...reviewForm });
       setReviews(p=>[res.data.review,...p]); setMyReview(res.data.review); setShowForm(false);
-      notify('Review submitted! ⭐', 'success');
-    } catch (err) { notify(err.message||'Failed', 'error'); }
+    } catch {}
     finally { setSubmitting(false); }
   };
 
@@ -196,11 +193,7 @@ function SingleProduct() {
         @media(max-width:740px){.sp-grid{grid-template-columns:1fr!important;gap:24px!important;}.sp-title-row{padding:28px 0 20px!important;}}
         @media(max-width:480px){.sp-rev-grid{grid-template-columns:1fr!important;}.sp-action-row{flex-direction:column!important;}.sp-action-row button{width:100%!important;justify-content:center!important;}.sp-fav-btn{width:100%!important;height:44px!important;}}
       `}</style>
-        {_notif && (
-          <div style={{ position:'fixed', top:20, left:'50%', transform:'translateX(-50%)', zIndex:9999, display:'flex', alignItems:'center', gap:8, padding:'10px 20px', borderRadius:50, background:_notif.type==='success'?'#f0fdf4':_notif.type==='error'?'#fef2f2':_notif.type==='warn'?'#fefce8':'#eff6ff', border:`1.5px solid ${_notif.type==='success'?'#bbf7d0':_notif.type==='error'?'#fecaca':_notif.type==='warn'?'#fde68a':'#bfdbfe'}`, color:_notif.type==='success'?'#16a34a':_notif.type==='error'?'#ef4444':_notif.type==='warn'?'#ca8a04':'#3b82f6', fontSize:13, fontWeight:700, whiteSpace:'nowrap', boxShadow:'0 8px 32px rgba(0,0,0,0.12)', fontFamily:"'DM Sans',sans-serif", pointerEvents:'none' }}>
-            {_notif.type==='success'?'✓':_notif.type==='error'?'✕':_notif.type==='warn'?'⚠':'ℹ'} {_notif.text}
-          </div>
-        )}
+
       {zoomSrc && <ZoomModal src={zoomSrc} alt={product?.title} onClose={()=>setZoomSrc(null)} />}
 
       <div style={{ minHeight:'100vh', background:'linear-gradient(135deg,#f0f0ff 0%,#fafaff 60%,#f5f0ff 100%)', fontFamily:"'DM Sans',sans-serif", padding:'0 20px 60px' }}>
@@ -308,7 +301,6 @@ function SingleProduct() {
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.3 }} style={{ marginTop:52 }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24, flexWrap:'wrap', gap:12 }}>
               <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                <div style={{ width:4, height:28, borderRadius:4, background:'linear-gradient(180deg,#6366f1,#8b5cf6)' }} />
                 <h2 style={{ fontSize:22, fontWeight:900, color:'#1e1b4b', margin:0, letterSpacing:'-0.01em' }}>
                   Customer <span style={{ color:'#6366f1', fontFamily:"'Pacifico',cursive" }}>Reviews</span>
                 </h2>
@@ -409,9 +401,8 @@ function SingleProduct() {
                 {[1,2,3].map(i => (
                   <div key={i} style={{ background:'#fff', borderRadius:22, padding:'22px', border:'1.5px solid #ebebf5', display:'flex', flexDirection:'column', gap:14 }}>
                     <div style={{ display:'flex', gap:12, alignItems:'center' }}>
-                      <Skel w={46} h={46} r={14}/>
+                      <Skel w={46} h={46} r={23}/>
                       <div style={{ flex:1 }}><Skel w="55%" h={13} style={{ marginBottom:7 }}/><Skel w="35%" h={10}/></div>
-                      <Skel w={50} h={50} r={12}/>
                     </div>
                     <div style={{ display:'flex', gap:3 }}>{[1,2,3,4,5].map(s=><Skel key={s} w={14} h={14} r={4}/>)}</div>
                     <Skel h={1}/>
@@ -434,10 +425,6 @@ function SingleProduct() {
                   const palette=['#6366f1','#8b5cf6','#ec4899','#10b981','#f59e0b','#3b82f6','#ef4444'];
                   const col   = palette[(rev.user?.name?.charCodeAt(0)||65) % palette.length];
                   const stars = Math.round(rev.rating);
-                  const rColor= stars>=4?'#16a34a':stars===3?'#ca8a04':'#ef4444';
-                  const rBg   = stars>=4?'#f0fdf4':stars===3?'#fefce8':'#fef2f2';
-                  const rBorder=stars>=4?'#bbf7d0':stars===3?'#fde68a':'#fecaca';
-                  const rLabel= stars>=5?'Perfect':stars>=4?'Great':stars>=3?'Good':stars>=2?'Fair':'Poor';
                   return (
                     <motion.div key={rev._id} className="rev-card"
                       initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }}
@@ -447,9 +434,9 @@ function SingleProduct() {
                     >
                       <div style={{ padding:'20px 22px', display:'flex', flexDirection:'column', gap:0 }}>
 
-                        {/* Row 1: avatar + name/date + rating badge */}
+                        {/* Row 1: avatar + name/date */}
                         <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:14 }}>
-                          <div style={{ width:46, height:46, borderRadius:14, flexShrink:0, background:`linear-gradient(135deg,${col},${col}bb)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, fontWeight:900, color:'#fff', boxShadow:`0 4px 12px ${col}45` }}>
+                          <div style={{ width:46, height:46, borderRadius:'50%', flexShrink:0, background:`linear-gradient(135deg,${col},${col}bb)`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, fontWeight:900, color:'#fff', boxShadow:`0 4px 12px ${col}45` }}>
                             {rev.user?.name?.charAt(0).toUpperCase()}
                           </div>
                           <div style={{ flex:1, minWidth:0 }}>
@@ -457,11 +444,6 @@ function SingleProduct() {
                             <p style={{ fontSize:11, color:'#b0b8c8', margin:0, fontWeight:500 }}>
                               {new Date(rev.createdAt).toLocaleDateString('en-US',{ month:'short', day:'numeric', year:'numeric' })}
                             </p>
-                          </div>
-                          {/* Rating pill — no verified badge */}
-                          <div style={{ flexShrink:0, textAlign:'center', padding:'6px 11px', borderRadius:12, background:rBg, border:`1.5px solid ${rBorder}` }}>
-                            <p style={{ fontSize:17, fontWeight:900, margin:'0 0 1px', lineHeight:1, color:rColor }}>{stars}.0</p>
-                            <p style={{ fontSize:9, fontWeight:700, margin:0, textTransform:'uppercase', letterSpacing:'0.06em', color:rColor }}>{rLabel}</p>
                           </div>
                         </div>
 
@@ -480,7 +462,7 @@ function SingleProduct() {
                           <p style={{ fontSize:14, fontWeight:800, color:'#1e1b4b', margin:'0 0 8px', lineHeight:1.35, letterSpacing:'-0.01em' }}>{rev.title}</p>
                         )}
 
-                        {/* Body with decorative quote */}
+                        {/* Body */}
                         <div style={{ position:'relative' }}>
                           <span style={{ position:'absolute', top:-10, left:-5, fontSize:44, color:'#e0e7ff', lineHeight:1, fontFamily:'Georgia,serif', pointerEvents:'none', userSelect:'none' }}>"</span>
                           <p style={{ fontSize:13, color:'#64748b', margin:0, lineHeight:1.75, paddingLeft:16 }}>{rev.body}</p>

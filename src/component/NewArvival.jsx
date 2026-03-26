@@ -102,7 +102,7 @@ function NewArrival() {
                   </div>
                 ))
               : data.map((p, i) => (
-                  <motion.div key={p.id} className="na-card-wrap"
+                  <motion.div key={p.id} className="na-card-wrap overflow-y-hidden"
                     initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }} transition={{ delay: i * 0.04, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                   >

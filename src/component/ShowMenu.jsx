@@ -17,7 +17,6 @@ import {
   FiLogOut,
   FiChevronRight,
 } from "react-icons/fi";
-import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { useFavoriteStore } from "../store/useFavoriteStore";
 
@@ -187,7 +186,6 @@ function ShowMenu() {
     await logout();
     resetCart();
     resetFavorites();
-    toast.success("Logged out successfully");
     navigate("/");
   };
 
