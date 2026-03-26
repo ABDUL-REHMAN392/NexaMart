@@ -4,7 +4,7 @@ import { useUIStore } from "../store/useUIStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { useCartStore } from "../store/useCartStore";
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Form from "./Form";
 import {
   FiUser,
@@ -66,7 +66,6 @@ const accountLinks = [
   { path: "/favorite", label: "My Favorites", icon: FiHeart },
 ];
 
-/* ── Section label ── */
 function SectionLabel({ children }) {
   return (
     <p
@@ -85,7 +84,6 @@ function SectionLabel({ children }) {
   );
 }
 
-/* ── Nav item ── */
 function NavItem({
   path,
   label,
@@ -171,6 +169,7 @@ function ShowMenu() {
   const { resetCart } = useCartStore();
   const { resetFavorites } = useFavoriteStore();
   const navigate = useNavigate();
+  const [loggingOut, setLoggingOut] = useState(false); // ← logout loading
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -182,11 +181,16 @@ function ShowMenu() {
   const close = () => hideMenu();
 
   const handleLogout = async () => {
-    close();
-    await logout();
-    resetCart();
-    resetFavorites();
-    navigate("/");
+    setLoggingOut(true);
+    try {
+      close();
+      await logout();
+      resetCart();
+      resetFavorites();
+      navigate("/");
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   return (
@@ -195,6 +199,15 @@ function ShowMenu() {
         @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
         .sm-body::-webkit-scrollbar { display: none; }
         .sm-body { scrollbar-width: none; }
+
+        @keyframes sm-spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        .sm-spinner {
+          display: inline-flex;
+          animation: sm-spin 0.8s linear infinite;
+        }
       `}</style>
 
       {/* Backdrop */}
@@ -234,7 +247,7 @@ function ShowMenu() {
           overflow: "hidden",
         }}
       >
-        {/* Top gradient accent */}
+        {/* Top accent */}
         <div
           style={{
             height: 3,
@@ -243,7 +256,7 @@ function ShowMenu() {
           }}
         />
 
-        {/* ── Header ── */}
+        {/* Header */}
         <motion.div
           variants={itemV}
           style={{
@@ -316,7 +329,7 @@ function ShowMenu() {
           </button>
         </motion.div>
 
-        {/* ── Search ── */}
+        {/* Search */}
         <motion.div
           variants={itemV}
           style={{ padding: "14px 18px 0", flexShrink: 0 }}
@@ -324,7 +337,7 @@ function ShowMenu() {
           <Form onSearch={close} />
         </motion.div>
 
-        {/* ── Body ── */}
+        {/* Body */}
         <div
           className="sm-body"
           style={{
@@ -336,7 +349,6 @@ function ShowMenu() {
             gap: 2,
           }}
         >
-          {/* Navigation */}
           <motion.div variants={itemV}>
             <SectionLabel>Navigation</SectionLabel>
           </motion.div>
@@ -353,7 +365,6 @@ function ShowMenu() {
             </motion.div>
           ))}
 
-          {/* Account links */}
           {isAuthenticated && (
             <>
               <motion.div variants={itemV}>
@@ -366,7 +377,6 @@ function ShowMenu() {
                 />
                 <SectionLabel>Account</SectionLabel>
               </motion.div>
-
               {accountLinks.map(({ path, label, icon }) => (
                 <motion.div key={path} variants={itemV}>
                   <NavItem
@@ -380,11 +390,10 @@ function ShowMenu() {
             </>
           )}
 
-          {/* Spacer */}
           <div style={{ flex: 1 }} />
         </div>
 
-        {/* ── Footer ── */}
+        {/* Footer */}
         <motion.div
           variants={itemV}
           style={{
@@ -469,9 +478,10 @@ function ShowMenu() {
                 </div>
               </div>
 
-              {/* Logout */}
+              {/* Logout button */}
               <button
                 onClick={handleLogout}
+                disabled={loggingOut}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -480,30 +490,45 @@ function ShowMenu() {
                   width: "100%",
                   height: 42,
                   borderRadius: 13,
-                  background: "#fef2f2",
+                  background: loggingOut ? "#fee2e2" : "#fef2f2",
                   border: "1.5px solid #fecaca",
                   color: "#ef4444",
                   fontSize: 13,
                   fontWeight: 700,
-                  cursor: "pointer",
+                  cursor: loggingOut ? "not-allowed" : "pointer",
                   fontFamily: "'DM Sans',sans-serif",
                   transition: "all 0.16s",
+                  opacity: loggingOut ? 0.75 : 1,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#fee2e2";
-                  e.currentTarget.style.borderColor = "#fca5a5";
+                  if (!loggingOut) {
+                    e.currentTarget.style.background = "#fee2e2";
+                    e.currentTarget.style.borderColor = "#fca5a5";
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#fef2f2";
-                  e.currentTarget.style.borderColor = "#fecaca";
+                  if (!loggingOut) {
+                    e.currentTarget.style.background = "#fef2f2";
+                    e.currentTarget.style.borderColor = "#fecaca";
+                  }
                 }}
               >
-                <FiLogOut size={14} /> Logout
+                {loggingOut ? (
+                  <>
+                    <span className="sm-spinner">
+                      <FiLogOut size={14} />
+                    </span>
+                    Logging out…
+                  </>
+                ) : (
+                  <>
+                    <FiLogOut size={14} /> Logout
+                  </>
+                )}
               </button>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {/* Guest prompt */}
               <div
                 style={{
                   padding: "14px 16px",

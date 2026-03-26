@@ -5,6 +5,7 @@ export const useAuthStore = create((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true,
+  isInitializing: true,   // ← reload pe auth check chal raha hai
   error: null,
 
   getMe: async () => {
@@ -12,12 +13,12 @@ export const useAuthStore = create((set, get) => ({
       set({ isLoading: true, error: null });
       const res = await api.get('/auth/me');
       set({ user: res.data.user, isAuthenticated: true });
-      return res.data.user; // ← OAuthSuccess guard ke liye zaroori
+      return res.data.user;
     } catch {
       set({ user: null, isAuthenticated: false });
-      throw new Error('Not authenticated'); // ← catch propagate ho
+      throw new Error('Not authenticated');
     } finally {
-      set({ isLoading: false });
+      set({ isLoading: false, isInitializing: false }); // ← dono false
     }
   },
 
@@ -26,11 +27,8 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await api.post('/auth/register', { name, email, password, phone });
       set({ user: res.data.user, isAuthenticated: true });
-
-      // Guest cart merge
       const { useCartStore } = await import('./useCartStore');
       await useCartStore.getState().mergeGuestCart();
-
       return { success: true };
     } catch (err) {
       set({ error: err.message });
@@ -45,11 +43,8 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await api.post('/auth/login', { email, password });
       set({ user: res.data.user, isAuthenticated: true });
-
-      // Guest cart merge — login ke BAAD, cookie set hone ke baad
       const { useCartStore } = await import('./useCartStore');
       await useCartStore.getState().mergeGuestCart();
-
       return { success: true };
     } catch (err) {
       set({ error: err.message });

@@ -20,7 +20,7 @@ import NotificationBell from "../component/Notificationbell";
 
 function Header() {
   const { menuOpen, showMenu } = useUIStore();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, isInitializing, logout } = useAuthStore();
   const totalItems = useCartStore((s) => s.totalItems());
   const { resetCart } = useCartStore();
   const { resetFavorites } = useFavoriteStore();
@@ -28,6 +28,7 @@ function Header() {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false); // ← logout loading
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -47,10 +48,141 @@ function Header() {
 
   const handleLogout = async () => {
     setDropdownOpen(false);
-    await logout();
-    resetCart();
-    resetFavorites();
-    navigate("/");
+    setLoggingOut(true);
+    try {
+      await logout();
+      resetCart();
+      resetFavorites();
+      navigate("/");
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
+  // ── Auth check chal raha hai — kuch mat dikhao (flicker prevention)
+  const renderAuthSection = () => {
+    if (isInitializing) {
+      return (
+        <div
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: "50%",
+            background: "#f1f0ff",
+            flexShrink: 0,
+          }}
+        />
+      );
+    }
+
+    if (isAuthenticated) {
+      return (
+        <div ref={dropdownRef} style={{ position: "relative", flexShrink: 0 }}>
+          <motion.button
+            className="nx-avatar"
+            onClick={() => setDropdownOpen((d) => !d)}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
+            style={{ border: "none", padding: 0 }}
+          >
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              user?.name?.charAt(0).toUpperCase()
+            )}
+          </motion.button>
+
+          <AnimatePresence>
+            {dropdownOpen && (
+              <motion.div
+                className="nx-dropdown"
+                initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="nx-dd-head">
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div
+                      style={{
+                        width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+                        background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        color: "#fff", fontSize: 14, fontWeight: 800, overflow: "hidden",
+                      }}
+                    >
+                      {user?.avatar ? (
+                        <img
+                          src={user.avatar}
+                          alt=""
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                      ) : (
+                        user?.name?.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div style={{ overflow: "hidden" }}>
+                      <p className="nx-dd-name">{user?.name}</p>
+                      <p className="nx-dd-email">{user?.email}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ padding: "6px 0" }}>
+                  <NavLink to="/profile" onClick={() => setDropdownOpen(false)} className="nx-dd-item">
+                    <span className="dd-ico"><FiUser size={14} /></span> My Profile
+                  </NavLink>
+                  <NavLink to="/orders" onClick={() => setDropdownOpen(false)} className="nx-dd-item">
+                    <span className="dd-ico"><FiPackage size={14} /></span> My Orders
+                  </NavLink>
+                  <NavLink to="/favorite" onClick={() => setDropdownOpen(false)} className="nx-dd-item">
+                    <span className="dd-ico"><CiHeart size={16} /></span> My Favorites
+                  </NavLink>
+                </div>
+
+                <div style={{ borderTop: "1px solid #f4f4fc", padding: "6px 0" }}>
+                  <button
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                    className="nx-dd-item danger"
+                    style={{ opacity: loggingOut ? 0.7 : 1, cursor: loggingOut ? "not-allowed" : "pointer" }}
+                  >
+                    {loggingOut ? (
+                      <>
+                        <span className="dd-ico">
+                          <motion.span
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                            style={{ display: "inline-flex" }}
+                          >
+                            <FiLogOut size={14} />
+                          </motion.span>
+                        </span>
+                        Logging out…
+                      </>
+                    ) : (
+                      <>
+                        <span className="dd-ico"><FiLogOut size={14} /></span> Logout
+                      </>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      );
+    }
+
+    return (
+      <NavLink to="/login" className="nx-signin-btn">
+        <FiLogIn size={13} /> Sign In
+      </NavLink>
+    );
   };
 
   return (
@@ -142,10 +274,6 @@ function Header() {
 
         .nx-divider { width: 1px; height: 20px; background: #e8e8f4; flex-shrink: 0; }
 
-        /* ── Visibility ──
-           Desktop (>1023px): desktop group dikhao, mobile group chhupaao
-           Mobile (<=1023px): mobile group dikhao, desktop group chhupaao
-        */
         .nx-desktop { display: flex; align-items: center; gap: 8px; }
         .nx-desktop-block { display: block; }
         .nx-mobile  { display: none; align-items: center; gap: 4px; }
@@ -158,6 +286,17 @@ function Header() {
         @media (max-width: 767px) {
           .nx-header-inner { padding: 0 16px !important; }
         }
+
+        /* ── Auth skeleton pulse (isInitializing) ── */
+        @keyframes nx-pulse {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0.4; }
+        }
+        .nx-skeleton {
+          animation: nx-pulse 1.4s ease-in-out infinite;
+          background: #e8e8f8; border-radius: 50%;
+          width: 34px; height: 34px; flex-shrink: 0;
+        }
       `}</style>
 
       <motion.header
@@ -166,9 +305,7 @@ function Header() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 100,
+          position: "sticky", top: 0, zIndex: 100,
           background: scrolled ? "rgba(255,255,255,0.94)" : "#fff",
           backdropFilter: scrolled ? "blur(20px)" : "none",
           borderBottom: `1.5px solid ${scrolled ? "#e8e8f4" : "#f4f4fc"}`,
@@ -179,13 +316,8 @@ function Header() {
         <div
           className="nx-header-inner"
           style={{
-            maxWidth: 1300,
-            margin: "0 auto",
-            padding: "0 32px",
-            height: 64,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
+            maxWidth: 1300, margin: "0 auto", padding: "0 32px",
+            height: 64, display: "flex", alignItems: "center", gap: 8,
           }}
         >
           {/* Logo */}
@@ -197,74 +329,45 @@ function Header() {
           >
             <NavLink
               to="/"
-              style={{
-                textDecoration: "none",
-                display: "flex",
-                alignItems: "baseline",
-                gap: 1,
-              }}
+              style={{ textDecoration: "none", display: "flex", alignItems: "baseline", gap: 1 }}
             >
-              <span
-                style={{
-                  fontSize: 21,
-                  fontWeight: 900,
-                  color: "#1e1b4b",
-                  letterSpacing: "-0.5px",
-                  fontFamily: "Sora, sans-serif",
-                }}
-              >
+              <span style={{ fontSize: 21, fontWeight: 900, color: "#1e1b4b", letterSpacing: "-0.5px", fontFamily: "Sora, sans-serif" }}>
                 Nexa
               </span>
-              <span
-                style={{
-                  fontSize: 21,
-                  color: "#6366f1",
-                  fontFamily: "'Pacifico', cursive",
-                }}
-              >
+              <span style={{ fontSize: 21, color: "#6366f1", fontFamily: "'Pacifico', cursive" }}>
                 Mart
               </span>
             </NavLink>
           </motion.div>
 
-          {/* Desktop Nav links */}
+          {/* Desktop Nav */}
           <nav className="nx-desktop" style={{ gap: 26, flexShrink: 0 }}>
             {["/", "/about", "/contact"].map((path) => (
               <NavLink
                 key={path}
                 to={path}
                 end={path === "/"}
-                className={({ isActive }) =>
-                  `nx-link${isActive ? " nx-link-active" : ""}`
-                }
+                className={({ isActive }) => `nx-link${isActive ? " nx-link-active" : ""}`}
               >
-                {path === "/"
-                  ? "Home"
-                  : path.slice(1).charAt(0).toUpperCase() + path.slice(2)}
+                {path === "/" ? "Home" : path.slice(1).charAt(0).toUpperCase() + path.slice(2)}
               </NavLink>
             ))}
           </nav>
 
           <div style={{ flex: 1 }} />
 
-          {/* ── DESKTOP GROUP — search, fav, cart, bell, avatar ── */}
+          {/* ── DESKTOP GROUP ── */}
           <div className="nx-desktop" style={{ gap: 6 }}>
-            {/* Search */}
-            <div
-              className="nx-desktop-block"
-              style={{ marginRight: 4, width: 220 }}
-            >
+            <div className="nx-desktop-block" style={{ marginRight: 4, width: 220 }}>
               <Form />
             </div>
 
             <div className="nx-divider" />
 
-            {/* Favorites */}
             <NavLink to="/favorite" className="nx-icon-btn" title="Favorites">
               <CiHeart size={21} />
             </NavLink>
 
-            {/* Cart */}
             <NavLink to="/cart" className="nx-icon-btn" title="Cart">
               <FiShoppingCart size={18} />
               <AnimatePresence>
@@ -282,162 +385,21 @@ function Header() {
               </AnimatePresence>
             </NavLink>
 
-            {/* Bell — DESKTOP ONLY — ek baar render */}
-            {isAuthenticated && <NotificationBell />}
+            {/* Bell — sirf authenticated ho aur initializing khatam ho ── */}
+            {!isInitializing && isAuthenticated && <NotificationBell />}
 
             <div className="nx-divider" style={{ margin: "0 2px" }} />
 
-            {/* Avatar dropdown — desktop only */}
-            {isAuthenticated ? (
-              <div
-                ref={dropdownRef}
-                style={{ position: "relative", flexShrink: 0 }}
-              >
-                <motion.button
-                  className="nx-avatar"
-                  onClick={() => setDropdownOpen((d) => !d)}
-                  whileHover={{ scale: 1.06 }}
-                  whileTap={{ scale: 0.94 }}
-                  style={{ border: "none", padding: 0 }}
-                >
-                  {user?.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    user?.name?.charAt(0).toUpperCase()
-                  )}
-                </motion.button>
-                <AnimatePresence>
-                  {dropdownOpen && (
-                    <motion.div
-                      className="nx-dropdown"
-                      initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                      <div className="nx-dd-head">
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: 36,
-                              height: 36,
-                              borderRadius: "50%",
-                              background:
-                                "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "#fff",
-                              fontSize: 14,
-                              fontWeight: 800,
-                              flexShrink: 0,
-                              overflow: "hidden",
-                            }}
-                          >
-                            {user?.avatar ? (
-                              <img
-                                src={user.avatar}
-                                alt=""
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                }}
-                              />
-                            ) : (
-                              user?.name?.charAt(0).toUpperCase()
-                            )}
-                          </div>
-                          <div style={{ overflow: "hidden" }}>
-                            <p className="nx-dd-name">{user?.name}</p>
-                            <p className="nx-dd-email">{user?.email}</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div style={{ padding: "6px 0" }}>
-                        <NavLink
-                          to="/profile"
-                          onClick={() => setDropdownOpen(false)}
-                          className="nx-dd-item"
-                        >
-                          <span className="dd-ico">
-                            <FiUser size={14} />
-                          </span>{" "}
-                          My Profile
-                        </NavLink>
-                        <NavLink
-                          to="/orders"
-                          onClick={() => setDropdownOpen(false)}
-                          className="nx-dd-item"
-                        >
-                          <span className="dd-ico">
-                            <FiPackage size={14} />
-                          </span>{" "}
-                          My Orders
-                        </NavLink>
-                        <NavLink
-                          to="/favorite"
-                          onClick={() => setDropdownOpen(false)}
-                          className="nx-dd-item"
-                        >
-                          <span className="dd-ico">
-                            <CiHeart size={16} />
-                          </span>{" "}
-                          My Favorites
-                        </NavLink>
-                      </div>
-                      <div
-                        style={{
-                          borderTop: "1px solid #f4f4fc",
-                          padding: "6px 0",
-                        }}
-                      >
-                        <button
-                          onClick={handleLogout}
-                          className="nx-dd-item danger"
-                        >
-                          <span className="dd-ico">
-                            <FiLogOut size={14} />
-                          </span>{" "}
-                          Logout
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ) : (
-              <NavLink to="/login" className="nx-signin-btn">
-                <FiLogIn size={13} /> Sign In
-              </NavLink>
-            )}
+            {/* Avatar / Sign In / Skeleton */}
+            {renderAuthSection()}
           </div>
 
-          {/* ── MOBILE GROUP — bell + hamburger ONLY ──
-              Avatar nahi, favorites/cart nahi (ShowMenu mein hain)
-              Bell — MOBILE ONLY — ek baar render
-          */}
+          {/* ── MOBILE GROUP ── */}
           <div className="nx-mobile">
-            {/* Favorites */}
             <NavLink to="/favorite" className="nx-icon-btn" title="Favorites">
               <CiHeart size={21} />
             </NavLink>
 
-            {/* Cart */}
             <NavLink to="/cart" className="nx-icon-btn" title="Cart">
               <FiShoppingCart size={18} />
               <AnimatePresence>
@@ -455,10 +417,8 @@ function Header() {
               </AnimatePresence>
             </NavLink>
 
-            {/* Bell */}
-            {isAuthenticated && <NotificationBell />}
+            {!isInitializing && isAuthenticated && <NotificationBell />}
 
-            {/* Hamburger */}
             <motion.button
               onClick={showMenu}
               className="nx-icon-btn"
