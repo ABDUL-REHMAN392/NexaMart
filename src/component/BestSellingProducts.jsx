@@ -55,7 +55,7 @@ function BestSellingProducts() {
           display: flex;
           gap: 14px;
           overflow-x: auto;
-          overflow-y:hidden
+          overflow-y: hidden;
           padding-bottom: 10px;
           padding-top: 8px;
           scrollbar-width: none;
@@ -66,6 +66,7 @@ function BestSellingProducts() {
         .bsp-card-wrap {
           flex-shrink: 0;
           width: 160px;
+          overflow: hidden;
         }
         @media (min-width: 480px)  { .bsp-card-wrap { width: 190px; } }
         @media (min-width: 640px)  { .bsp-card-wrap { width: 220px; } }
@@ -105,7 +106,9 @@ function BestSellingProducts() {
               : data.map((p, i) => (
                   <motion.div key={p.id} className="bsp-card-wrap"
                     initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }} transition={{ delay: i * 0.04, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                    viewport={{ once: true, margin: "0px" }}
+                    transition={{ delay: i * 0.04, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                    style={{ overflow: 'hidden' }}
                   >
                     <ShowItem {...p} />
                   </motion.div>
